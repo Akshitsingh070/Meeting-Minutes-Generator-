@@ -1,228 +1,154 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Purple/Violet accent palette */
-  --color-accent-50: #f5f3ff;
-  --color-accent-100: #ede9fe;
-  --color-accent-200: #ddd6fe;
-  --color-accent-300: #c4b5fd;
-  --color-accent-400: #a78bfa;
-  --color-accent-500: #8b5cf6;
-  --color-accent-600: #7c3aed;
-  --color-accent-700: #6d28d9;
-  --color-accent-800: #5b21b6;
-  --color-accent-900: #4c1d95;
+  /* Refined Purple & Lilac Theme Palette */
+  --color-brand-50: #faf7ff;
+  --color-brand-100: #f1ebfe;
+  --color-brand-200: #e4d7fe;
+  --color-brand-300: #cfb9fd;
+  --color-brand-400: #b08efb;
+  --color-brand-500: #8c5bf5;
+  --color-brand-600: #743cee;
+  --color-brand-700: #622ad4;
+  --color-brand-800: #5122b1;
+  --color-brand-900: #421c8f;
 
-  /* Surface colors for the dark theme */
-  --color-surface-950: #0a0a0f;
-  --color-surface-900: #0f0f1a;
-  --color-surface-800: #161625;
-  --color-surface-700: #1e1e32;
-  --color-surface-600: #2a2a42;
+  /* App Background & Surface Neutrals */
+  --color-app-bg: #f4f3f8;
+  --color-card-bg: #ffffff;
+  --color-card-border: #eeebf5;
+  --color-sidebar-bg: #ffffff;
+
+  /* Typography Colors */
+  --color-text-main: #181925;
+  --color-text-muted: #64687a;
+  --color-text-subtle: #969ba8;
 }
 
-/* ─── Base Styles ─────────────────────────────────── */
-
+/* ─── Global Resets & Base ───────────────────────── */
 * {
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  background-color: var(--color-app-bg);
+  color: var(--color-text-main);
   font-family: var(--font-sans);
-  background-color: var(--color-surface-950);
-  color: #e2e8f0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Scrollbar ───────────────────────────────────── */
-
+/* ─── Scrollbar Styling ───────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-600);
-  border-radius: 3px;
+  background: #d8d3e5;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent-700);
+  background: #b8aee0;
 }
 
-/* ─── Animations ──────────────────────────────────── */
+/* ─── Custom UI Utility Classes ──────────────────── */
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.card-white {
+  background-color: #ffffff;
+  border: 1px solid #eeebf5;
+  border-radius: 1.25rem; /* 20px */
+  box-shadow: 0 2px 12px -2px rgba(100, 90, 130, 0.04);
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.card-transcript-gradient {
+  background: linear-gradient(180deg, #eee8fc 0%, #f8f6fd 28%, #ffffff 100%);
+  border: 1px solid #e5dcfa;
+  border-radius: 1.25rem;
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.15); }
-  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.3); }
+.card-keypoints-gradient {
+  background: linear-gradient(180deg, #f8f5fe 0%, #ffffff 32%);
+  border: 1px solid #eeebf5;
+  border-radius: 1.25rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.card-banner-lilac {
+  background: #ebe5fb;
+  border: 1px solid #ded4f8;
+  border-radius: 1rem;
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out both;
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-700) 25%,
-    var(--color-surface-600) 50%,
-    var(--color-surface-700) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Staggered animation delays for results sections */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-
-/* ─── Glass Card ──────────────────────────────────── */
-
-.glass-card {
-  background: linear-gradient(
-    135deg,
-    rgba(30, 30, 50, 0.6) 0%,
-    rgba(15, 15, 26, 0.8) 100%
-  );
-  border: 1px solid rgba(139, 92, 246, 0.1);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.glass-card:hover {
-  border-color: rgba(139, 92, 246, 0.25);
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.08);
-}
-
-/* ─── Textarea ────────────────────────────────────── */
-
-.transcript-textarea {
-  background: var(--color-surface-900);
-  border: 1px solid var(--color-surface-600);
-  border-radius: 12px;
-  color: #e2e8f0;
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  line-height: 1.7;
-  padding: 1.25rem;
-  width: 100%;
-  min-height: 220px;
-  resize: vertical;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  outline: none;
-}
-
-.transcript-textarea::placeholder {
-  color: #475569;
-}
-
-.transcript-textarea:focus {
-  border-color: var(--color-accent-500);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-}
-
-/* ─── Generate Button ─────────────────────────────── */
-
-.btn-generate {
+/* Pill buttons like 'Share' and 'Export minutes' */
+.btn-pill-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 2.5rem;
-  font-family: var(--font-sans);
-  font-size: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e2dfec;
+  color: #383a48;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btn-pill-light:hover {
+  background-color: #faf9fd;
+  border-color: #d1cbe4;
+  color: #1a1b24;
+}
+
+/* Primary purple CTA */
+.btn-primary-purple {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #7c44f8 0%, #682fe6 100%);
+  color: #ffffff;
   font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, var(--color-accent-600), var(--color-accent-700));
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
   border: none;
-  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.22);
 }
 
-.btn-generate::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600));
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.btn-primary-purple:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7036ee 0%, #5d25dc 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(109, 40, 217, 0.3);
 }
 
-.btn-generate:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.btn-generate:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35);
-}
-
-.btn-generate:active:not(:disabled) {
+.btn-primary-purple:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.btn-generate:disabled {
+.btn-primary-purple:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.btn-generate span {
-  position: relative;
-  z-index: 1;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Section Badge ───────────────────────────────── */
-
-.section-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 9999px;
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--color-accent-300);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }

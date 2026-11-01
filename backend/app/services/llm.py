@@ -47,7 +47,7 @@ class GoogleGeminiService(LLMService):
     def __init__(self, settings: Settings | None = None):
         self.settings = settings or get_settings()
         self.api_key = self.settings.gemini_api_key
-        self.model_name = self.settings.gemini_model or "gemini-2.5-flash"
+        self.model_name = self.settings.gemini_model or "gemini-3.5-flash"
         self._client = None
 
     def _get_client(self):

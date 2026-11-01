@@ -1,43 +1,80 @@
-/**
- * App — Root component for the Meeting Minutes Generator.
- *
- * Phase 4: Integrates React frontend with the FastAPI backend.
- *
- * State machine:
- *   idle → loading → success | error
- *   error → idle (retry/dismiss)
- *   success → idle (new generation)
- */
-
 import { useState } from 'react'
-import TranscriptInput, { MIN_LENGTH } from './components/TranscriptInput'
-import GenerateButton from './components/GenerateButton'
-import LoadingState from './components/LoadingState'
-import ErrorDisplay from './components/ErrorDisplay'
-import MeetingMinutes from './components/MeetingMinutes'
+import { useAuth } from './context/AuthContext'
+import LoginPage from './components/LoginPage'
+import Sidebar from './components/Sidebar'
+import DashboardHeader from './components/DashboardHeader'
+import DashboardTabs from './components/DashboardTabs'
+import OverviewCard from './components/OverviewCard'
+import KeyPointsCard from './components/KeyPointsCard'
+import ActionItemsCard from './components/ActionItemsCard'
+import TranscriptCard, { DEFAULT_TRANSCRIPT_TEXT } from './components/TranscriptCard'
+import MeetingInsightsCard from './components/MeetingInsightsCard'
+import TopicsDiscussedCard from './components/TopicsDiscussedCard'
+import ReadyBanner from './components/ReadyBanner'
 import { api } from './services/api'
 
+// Initial default minutes matching the user's mockup design
+const INITIAL_MINUTES = {
+  summary:
+    'The team reviewed project progress, with backend and frontend development nearing completion. We discussed the third-party API integration, agreed on priorities, and outlined the next steps for launch.',
+  participants: ['Rahul', 'Priya', 'Aman'],
+  decisions: [
+    'Backend development is on track, with authentication complete. Frontend dashboard redesign is ready for testing.',
+    'Third-party API integration needs additional testing before launch.',
+  ],
+  action_items: [
+    {
+      task: 'Complete API integration testing',
+      responsible: 'Engineering',
+      deadline: 'Friday',
+    },
+    {
+      task: 'Review dashboard UI',
+      responsible: 'Design',
+      deadline: 'Nov 15',
+    },
+    {
+      task: 'Schedule a mid-week check-in',
+      responsible: 'Product',
+      deadline: null,
+    },
+  ],
+}
+
 export default function App() {
-  const [transcript, setTranscript] = useState('')
+  const { isAuthenticated } = useAuth()
+  const [activeNav, setActiveNav] = useState('home')
+  const [activeTab, setActiveTab] = useState('summary')
+  const [transcript, setTranscript] = useState(DEFAULT_TRANSCRIPT_TEXT)
+  const [minutes, setMinutes] = useState(INITIAL_MINUTES)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [result, setResult] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
 
-  const canGenerate = transcript.trim().length >= MIN_LENGTH && !loading
+  // Show login page if unauthenticated
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
 
-  /**
-   * Send the transcript to the backend API and update state.
-   */
+  const showToast = (msg) => {
+    setToastMessage(msg)
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr))
+    }, 3200)
+  }
+
+  const canGenerate = transcript.trim().length >= 20 && !loading
+
   const handleGenerate = async () => {
     if (!canGenerate) return
 
     setLoading(true)
     setError(null)
-    setResult(null)
 
     try {
-      const minutes = await api.generateMinutes(transcript.trim())
-      setResult(minutes)
+      const data = await api.generateMinutes(transcript.trim())
+      setMinutes(data)
+      showToast('Meeting minutes successfully generated!')
     } catch (err) {
       setError(err.message || 'Failed to generate meeting minutes.')
     } finally {
@@ -45,97 +82,157 @@ export default function App() {
     }
   }
 
-  const handleRetry = () => {
-    setError(null)
-    handleGenerate()
+  const handleShareMinutes = () => {
+    if (!minutes) return
+    const text = `MEETING MINUTES\n\nOVERVIEW:\n${minutes.summary}\n\nACTION ITEMS:\n${(minutes.action_items || [])
+      .map((a, i) => `${i + 1}. ${a.task} (${a.responsible || 'Unassigned'})`)
+      .join('\n')}`
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Summary copied to clipboard!')
+    })
   }
 
-  const handleDismiss = () => {
-    setError(null)
-  }
+  // Derive speaker count and dynamic duration estimate
+  const speakerCount = minutes?.participants?.length > 0 ? minutes.participants.length : 5
+  const actionCount = minutes?.action_items?.length > 0 ? minutes.action_items.length : 3
 
   return (
-    <div className="min-h-screen bg-surface-950">
-      {/* ── Subtle background gradient ── */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139,92,246,0.08) 0%, transparent 70%)',
-        }}
-      />
+    <div className="min-h-screen bg-[#f4f3f8] flex flex-row">
+      {/* ── Left Navigation Sidebar ── */}
+      <Sidebar activeNav={activeNav} onSelectNav={setActiveNav} />
 
-      {/* ── Main content ── */}
-      <main className="relative max-w-2xl mx-auto px-4 py-12 sm:py-16">
-        {/* ── Header ── */}
-        <header className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-500/10 border border-accent-500/15 text-accent-300 text-xs font-medium mb-5">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
-            </svg>
-            AI-Powered
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-3">
-            Meeting Minutes{' '}
-            <span className="bg-gradient-to-r from-accent-400 to-accent-300 bg-clip-text text-transparent">
-              Generator
-            </span>
-          </h1>
-
-          <p className="text-slate-400 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-            Paste your meeting transcript below and let AI extract structured
-            minutes — summary, decisions, action items, and more.
-          </p>
-        </header>
-
-        {/* ── Input Section ── */}
-        <div className="glass-card p-6 sm:p-8 mb-8">
-          <TranscriptInput
-            value={transcript}
-            onChange={setTranscript}
-            disabled={loading}
+      {/* ── Main Dashboard Workspace ── */}
+      <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <DashboardHeader
+            meetingTitle="meeting minutes generator"
+            metaString="Mon, Nov 2, 2026 / 3:00 PM – 4:00 PM (60m) / Development"
+            minutesData={minutes}
+            rawTranscript={transcript}
+            onNotification={showToast}
           />
 
-          <div className="mt-5 flex justify-end">
-            <GenerateButton
-              onClick={handleGenerate}
-              loading={loading}
-              disabled={!canGenerate}
-            />
-          </div>
+          {/* Toast Notification Alert */}
+          {toastMessage && (
+            <div className="fixed top-5 right-5 z-50 bg-[#181925] text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 border border-slate-700 animate-fade-in">
+              <span className="h-2 w-2 rounded-full bg-[#8c5bf5]" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {error && (
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center justify-between gap-3 animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <svg className="h-4 w-4 text-red-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerate}
+                  className="font-semibold text-red-800 hover:underline"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-600 px-1"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <DashboardTabs activeTab={activeTab} onSelectTab={setActiveTab} />
+
+          {/* Tab 1: Summary Dashboard View (Matching Image) */}
+          {activeTab === 'summary' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* ── Left Column (Overview, Key Points, Action Items) ── */}
+              <div className="lg:col-span-7 space-y-6">
+                <OverviewCard summary={minutes?.summary} loading={loading} />
+
+                <KeyPointsCard
+                  decisions={minutes?.decisions}
+                  summary={minutes?.summary}
+                  loading={loading}
+                />
+
+                <ActionItemsCard
+                  actionItems={minutes?.action_items}
+                  loading={loading}
+                />
+              </div>
+
+              {/* ── Right Column (Transcript, Insights, Topics, Banner) ── */}
+              <div className="lg:col-span-5 space-y-6">
+                <TranscriptCard
+                  transcript={transcript}
+                  onChangeTranscript={setTranscript}
+                  onGenerate={handleGenerate}
+                  loading={loading}
+                  canGenerate={canGenerate}
+                />
+
+                <MeetingInsightsCard
+                  duration="60 min"
+                  speakerCount={speakerCount}
+                  actionCount={actionCount}
+                  sentiment="Balanced discussion · Clear outcomes · Positive sentiment"
+                />
+
+                <TopicsDiscussedCard />
+
+                <ReadyBanner onShare={handleShareMinutes} />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Full Transcript Notes View */}
+          {activeTab === 'transcript' && (
+            <div className="card-white p-6 sm:p-8 space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-[#181925]">Full Meeting Transcript</h2>
+                  <p className="text-xs text-[#64687a]">Paste notes or audio transcriptions below to extract minutes.</p>
+                </div>
+                <button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate || loading}
+                  className="btn-primary-purple text-xs"
+                >
+                  {loading ? 'Processing...' : 'Process Transcript'}
+                </button>
+              </div>
+
+              <textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                disabled={loading}
+                rows={16}
+                className="w-full text-xs sm:text-sm font-mono text-[#181925] p-4 bg-[#faf9fd] rounded-2xl border border-[#ded7f3] focus:border-[#743cee] focus:outline-none transition-all"
+                placeholder="Paste meeting transcript here..."
+              />
+
+              <div className="flex items-center justify-between text-xs text-[#8c91a0]">
+                <span>{transcript.length.toLocaleString()} characters entered</span>
+                <button
+                  onClick={() => setTranscript(DEFAULT_TRANSCRIPT_TEXT)}
+                  className="text-[#743cee] font-semibold hover:underline"
+                >
+                  Reset to demo transcript
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* ── Error State ── */}
-        {error && (
-          <div className="mb-8">
-            <ErrorDisplay
-              message={error}
-              onRetry={handleRetry}
-              onDismiss={handleDismiss}
-            />
-          </div>
-        )}
-
-        {/* ── Loading State ── */}
-        {loading && (
-          <div className="mb-8">
-            <LoadingState />
-          </div>
-        )}
-
-        {/* ── Results ── */}
-        {result && !loading && (
-          <MeetingMinutes data={result} />
-        )}
-
-        {/* ── Footer ── */}
-        <footer className="mt-16 pt-6 border-t border-surface-800 text-center">
-          <p className="text-xs text-slate-600">
-            Meeting Minutes Generator · AI extracts only what is explicitly stated · Never invents information
-          </p>
-        </footer>
-      </main>
+      </div>
     </div>
   )
 }
